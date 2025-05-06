@@ -18,8 +18,8 @@ export default class FirstWebpart extends React.Component<IFirstWebpartProps> {
    <hr/>
    <SearchBox placeholder='search here' iconProps={{iconName:'search'}} />
     <br/><br/>
-   <Label required>Full Name</Label>
-   <TextField placeholder='Vijay thapak'/>
+  
+   <TextField placeholder='Vijay thapak' label='Full Name' required/>
    <Label>Email ID</Label>
    <TextField type='email'autoComplete='on'
    placeholder='vijaythapak2001@gmail.com'/>
