@@ -4,7 +4,7 @@ import type { ISampleFormProps } from './ISampleFormProps';
 import { ISampleFormState } from './ISampleFormState';
 import { Web } from '@pnp/sp/webs';
 import {Dialog} from '@microsoft/sp-dialog';
-import { PrimaryButton, Slider, TextField } from '@fluentui/react';
+import { ChoiceGroup, Dropdown, PrimaryButton, Slider, TextField } from '@fluentui/react';
 import { PeoplePicker,PrincipalType } from '@pnp/spfx-controls-react/lib/PeoplePicker';
 export default class SampleForm extends React.Component<ISampleFormProps,ISampleFormState> {
   constructor(props:ISampleFormProps,state:ISampleFormState){
@@ -18,7 +18,10 @@ export default class SampleForm extends React.Component<ISampleFormProps,ISample
       Manager:[],
       ManagerId:[],
       Admin:'',
-      AdminId:0
+      AdminId:0,
+      Department:'',
+      City:'',
+      Gender:''
 
     }
   }
@@ -33,7 +36,10 @@ public async createItem(){
     Address:this.state.FullAddress,
     Score:this.state.Score,
     ManagerId:{results:this.state.ManagerId},
-    AdminId:this.state.AdminId
+    AdminId:this.state.AdminId,
+    CityId:this.state.City,
+    Department:this.state.Department,
+    Gender:this.state.Gender
   })
   .then((response:any)=>{
     // console.log('Item created successfully',response);
@@ -47,7 +53,10 @@ public async createItem(){
       AdminId:0,
       Admin:'',
       Manager:[],
-      ManagerId:[]
+      ManagerId:[],
+      City:'',
+      Department:'',
+      Gender:''
     });
     return response;
 
@@ -112,6 +121,24 @@ resolveDelay={1000}
 ensureUser={true}
 onChange={this._getAdmin}
 webAbsoluteUrl={this.props.siteurl}
+/>
+<Dropdown 
+options={this.props.DepartmentOptions}
+label='Department'
+selectedKey={this.state.Department}
+onChange={(_,options)=>this.handleChange('Department',options?.key||'')}
+/>
+<Dropdown 
+options={this.props.CityOptions}
+label='City'
+selectedKey={this.state.City}
+onChange={(_,options)=>this.handleChange('City',options?.key||'')}
+/>
+<ChoiceGroup 
+options={this.props.GenderOptions}
+label='Gender'
+selectedKey={this.state.Gender}
+onChange={(_,options)=>this.handleChange('Gender',options?.key||'')}
 />
      <br/>
      <PrimaryButton text='Save' onClick={()=>this.createItem()} iconProps={{iconName:'save'}}/>

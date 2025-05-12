@@ -14,6 +14,7 @@ import { ISampleFormProps } from './components/ISampleFormProps';
 
 export interface ISampleFormWebPartProps {
   ListName: string;
+  CityOptions:any
 }
 
 export default class SampleFormWebPart extends BaseClientSideWebPart<ISampleFormWebPartProps> {
@@ -23,16 +24,22 @@ export default class SampleFormWebPart extends BaseClientSideWebPart<ISampleForm
       sp.setup({
         spfxContext:this.context as any
       });
+      this._getLookupOptions();
     });
   }
 
-  public render(): void {
+  public async render():Promise< void> {
     const element: React.ReactElement<ISampleFormProps> = React.createElement(
       SampleForm,
       {
       ListName:this.properties.ListName,
       context:this.context,
-      siteurl:this.context.pageContext.web.absoluteUrl
+      siteurl:this.context.pageContext.web.absoluteUrl,
+      DepartmentOptions:await this._getDropdOptions(this.context.pageContext.web.absoluteUrl,'Department'),
+      SkillsOptions:await this._getDropdOptions(this.context.pageContext.web.absoluteUrl,'Skills'),
+      GenderOptions:await this._getDropdOptions(this.context.pageContext.web.absoluteUrl,'Gender'),
+      CityOptions:this.properties.CityOptions
+
       }
     );
 
@@ -73,5 +80,59 @@ export default class SampleFormWebPart extends BaseClientSideWebPart<ISampleForm
         }
       ]
     };
+  }
+  //Dropdown
+  private async _getDropdOptions(siteurl:string,fieldValue:string):Promise<any>{
+try{
+  const response=await fetch(`${siteurl}/_api/web/lists/getbytitle('First List')/fields?$filter=EntityPropertyName eq '${fieldValue}'`,
+    {
+      method:'GET',
+      headers:{
+        'Accept':'application/json;odata=nometadata'
+      }
+    }
+  );
+  if(!response.ok){
+    throw new Error(`Error fetching data: ${response.statusText}`);
+  }
+  const data =await response.json();
+  const choices=data?.value[0]?.Choices;
+  return choices.map((choice:any)=>({
+    key:choice,
+    text:choice
+  }));
+}
+catch(error){
+  console.error('Error fetching dropdown options:', error);
+
+
+}
+  }
+  //getlookup
+  private async _getLookupOptions():Promise<void>{
+    try{
+      const response=await fetch(`${this.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Cities')/items?$select=Title,ID`,
+        {
+          method:'GET',
+          headers:{
+            'Accept':'application/json;odata=nometadata'
+          }
+        }
+      );
+      if(!response.ok){
+        throw new Error(`Error fetching data: ${response.statusText}`);
+      }
+      const data=await response.json();
+      const cityOptions=data.value.map((city:{ID:string,Title:string})=>({
+        key:city.ID,
+        text:city.Title
+      }));
+      this.properties.CityOptions=cityOptions;
+    }
+    catch(error){
+      console.error('Error fetching dropdown options:', error);
+    
+    
+    }
   }
 }

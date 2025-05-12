@@ -8,4 +8,7 @@ export interface ISampleFormState{
     ManagerId:any;
    Admin:any; //single people picker
    AdminId:any;
+   Department:any;
+   Gender:any;
+   City:any;
 }
