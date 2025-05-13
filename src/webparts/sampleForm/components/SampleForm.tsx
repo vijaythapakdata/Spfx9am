@@ -4,8 +4,30 @@ import type { ISampleFormProps } from './ISampleFormProps';
 import { ISampleFormState } from './ISampleFormState';
 import { Web } from '@pnp/sp/webs';
 import {Dialog} from '@microsoft/sp-dialog';
-import { ChoiceGroup, Dropdown, PrimaryButton, Slider, TextField } from '@fluentui/react';
+import { ChoiceGroup, DatePicker, Dropdown, IDatePickerStrings, IDropdownOption, PrimaryButton, Slider, TextField } from '@fluentui/react';
 import { PeoplePicker,PrincipalType } from '@pnp/spfx-controls-react/lib/PeoplePicker';
+export const DatePickerString:IDatePickerStrings={
+  months:['January','February','March','April','May','June','July','August','September','October','November','December'],
+  shortMonths:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+  days:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+  shortDays:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+  goToToday:'Go to today',
+  prevMonthAriaLabel:'Previous month',
+  nextMonthAriaLabel:'Next month',
+  prevYearAriaLabel:'Previous year',
+  nextYearAriaLabel:'Next year',
+  closeButtonAriaLabel:'Close date picker',
+}
+export const FormateDate=(date:any):string=>{
+  var date1=new Date(date);
+  var year=date1.getFullYear();
+  var month=(1+date1.getMonth()).toString();
+  month=month.length>1?month:'0'+month;
+  var day=date1.getDate().toString();
+  day=day.length>1?day:'0'+day;
+  return year+'/'+month+'/'+day;
+}
+
 export default class SampleForm extends React.Component<ISampleFormProps,ISampleFormState> {
   constructor(props:ISampleFormProps,state:ISampleFormState){
     super(props);
@@ -21,7 +43,9 @@ export default class SampleForm extends React.Component<ISampleFormProps,ISample
       AdminId:0,
       Department:'',
       City:'',
-      Gender:''
+      Gender:'',
+      DOB:'',
+      Skills:[]
 
     }
   }
@@ -39,7 +63,9 @@ public async createItem(){
     AdminId:this.state.AdminId,
     CityId:this.state.City,
     Department:this.state.Department,
-    Gender:this.state.Gender
+    Gender:this.state.Gender,
+    DOB:new Date(this.state.DOB),
+    Skills:{results:this.state.Skills}
   })
   .then((response:any)=>{
     // console.log('Item created successfully',response);
@@ -56,7 +82,9 @@ public async createItem(){
       ManagerId:[],
       City:'',
       Department:'',
-      Gender:''
+      Gender:'',
+      DOB:'',
+      Skills:[]
     });
     return response;
 
@@ -140,6 +168,24 @@ label='Gender'
 selectedKey={this.state.Gender}
 onChange={(_,options)=>this.handleChange('Gender',options?.key||'')}
 />
+
+<DatePicker
+label='Date of Birth'
+value={this.state.DOB}
+onSelectDate={(e)=>this.setState({DOB:e})}
+strings={DatePickerString}
+formatDate={FormateDate}
+/>
+<Dropdown 
+options={this.props.SkillsOptions}
+label='Skills'
+// selectedKey={this.state.City}
+defaultSelectedKeys={this.state.Skills}
+onChange={this._getSkills}
+multiSelect
+
+/>
+
      <br/>
      <PrimaryButton text='Save' onClick={()=>this.createItem()} iconProps={{iconName:'save'}}/>
      </>
@@ -169,5 +215,12 @@ onChange={(_,options)=>this.handleChange('Gender',options?.key||'')}
         AdminId:0
       })
     }
+  }
+  //Mutlti select dropdown
+  private _getSkills=(event:React.FormEvent<HTMLDivElement>,option:IDropdownOption):void=>{
+    const selectedkey=option.selected?[...this.state.Skills,option.key as string]:this.state.Skills.filter((key:any)=>key!==option.key);
+    this.setState({
+      Skills:selectedkey
+    })
   }
 }
