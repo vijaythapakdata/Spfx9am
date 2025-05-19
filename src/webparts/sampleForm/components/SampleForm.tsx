@@ -4,7 +4,7 @@ import type { ISampleFormProps } from './ISampleFormProps';
 import { ISampleFormState } from './ISampleFormState';
 import { Web } from '@pnp/sp/webs';
 import {Dialog} from '@microsoft/sp-dialog';
-import { ChoiceGroup, DatePicker, Dropdown, IDatePickerStrings, IDropdownOption, PrimaryButton, Slider, TextField } from '@fluentui/react';
+import { ChoiceGroup, DatePicker, Dropdown, IDatePickerStrings, IDropdownOption, Label, PrimaryButton, Slider, TextField } from '@fluentui/react';
 import { PeoplePicker,PrincipalType } from '@pnp/spfx-controls-react/lib/PeoplePicker';
 export const DatePickerString:IDatePickerStrings={
   months:['January','February','March','April','May','June','July','August','September','October','November','December'],
@@ -45,16 +45,18 @@ export default class SampleForm extends React.Component<ISampleFormProps,ISample
       City:'',
       Gender:'',
       DOB:'',
-      Skills:[]
+      Skills:[],
+      Attachments:[]
 
     }
   }
 //create item
 public async createItem(){
-  let web=Web(this.props.siteurl); // https://contoso.sharepoint.com/sites/your-site
-
-  await web.lists.getByTitle(this.props.ListName).items.add({
-    Title:this.state.Name,
+try{
+const web=Web(this.props.siteurl);
+const lists=web.lists.getByTitle(this.props.ListName);
+const item=await lists.items.add({
+  Title:this.state.Name,
     EmailAddress:this.state.Email,
     Age:parseInt(this.state.Age),
     Address:this.state.FullAddress,
@@ -66,42 +68,74 @@ public async createItem(){
     Gender:this.state.Gender,
     DOB:new Date(this.state.DOB),
     Skills:{results:this.state.Skills}
-  })
-  .then((response:any)=>{
-    // console.log('Item created successfully',response);
-    Dialog.alert('Item created successfully');
-    this.setState({
-      Name:'',
-      Email:'',
-      Age:'',
-      FullAddress:'',
-      Score:0,
-      AdminId:0,
-      Admin:'',
-      Manager:[],
-      ManagerId:[],
-      City:'',
-      Department:'',
-      Gender:'',
-      DOB:'',
-      Skills:[]
-    });
-    return response;
-
-  })
-  .catch((error:any)=>{
-    // console.log('Error creating item',error);
-    Dialog.alert('Error creating item');
-    throw error;
-  })
+});
+const itemId=item.data.Id;
+//uplaod multiple files
+for(const file of this.state.Attachments){
+  const arrayBuffer=await file.arrayBuffer();
+  await lists.items.getById(itemId).attachmentFiles.add(file.name,arrayBuffer);
+}
+Dialog.alert('Item created successfully');
+// reset the form
+this.setState({
+  Name:'',
+  Email:'',
+  Age:'',
+  Score:0,
+  FullAddress:'',
+  Manager:[],
+  ManagerId:[],
+  Admin:'',
+  AdminId:0,
+  Department:'',
+  City:'',
+  Gender:'',
+  DOB:'',
+  Skills:[],
+  Attachments:[]
+})
+}
+catch(err){
+console.error('Error creating item:',err);
+Dialog.alert('Error creating item');
+}
+    
+  
+  
 
 }
 
-//Form Event
+//Reset the from
+public resetForm(){
+  this.setState({
+    Name:'',
+    Email:'',
+    Age:'',
+    Score:0,
+    FullAddress:'',
+    Manager:[],
+    ManagerId:[],
+    Admin:'',
+    AdminId:0,
+    Department:'',
+    City:'',
+    Gender:'',
+    DOB:'',
+    Skills:[],
+    Attachments:[]
+  })
+}
 
 private handleChange=(fieldvalue:keyof ISampleFormState,value:string|number|boolean):void=>{
 this.setState({[fieldvalue]:value}as unknown as Pick<ISampleFormState,keyof ISampleFormState>
  )
+}
+//FFile uplod
+private handleFileChange=(event:React.ChangeEvent<HTMLInputElement>)=>{
+  const files=event.target.files;
+  if(files){
+    this.setState({Attachments:Array.from(files)})
+  }
 }
   public render(): React.ReactElement<ISampleFormProps> {
     
@@ -185,9 +219,21 @@ onChange={this._getSkills}
 multiSelect
 
 />
-
+<Label>Upload Files</Label>
+<input type='file' onChange={this.handleFileChange} multiple 
+// style={{
+//   position:'absolute',
+//   top:0,
+//   left:0,
+//   width:'100%',
+//   height:'100%',
+// opacity:'2%',
+//   cursor:'pointer'
+// }}
+/>
      <br/>
-     <PrimaryButton text='Save' onClick={()=>this.createItem()} iconProps={{iconName:'save'}}/>
+     <PrimaryButton text='Save' onClick={()=>this.createItem()} iconProps={{iconName:'save'}}/>&nbsp;&nbsp;&nbsp;
+     <PrimaryButton text='Reset' onClick={()=>this.resetForm()} iconProps={{iconName:'reset'}}/>
      </>
     );
   }

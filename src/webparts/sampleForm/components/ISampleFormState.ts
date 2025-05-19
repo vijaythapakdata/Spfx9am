@@ -13,4 +13,5 @@ export interface ISampleFormState{
    City:any;
    DOB:any;
    Skills:any;
+   Attachments:any;
 }
