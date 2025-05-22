@@ -5,7 +5,7 @@ import { IFunctionalComponentState } from './IFunctionalComponentState';
 import { Web } from '@pnp/sp/webs';
 import { Dialog } from '@microsoft/sp-dialog';
 import { PrimaryButton, Slider, TextField } from '@fluentui/react';
-
+import { PeoplePicker,PrincipalType } from '@pnp/spfx-controls-react/lib/PeoplePicker';
 const FunctionalComponent :React.FC<IFunctionalComponentProps>=(props)=>{
   const[formData,setFormdData]=useState<IFunctionalComponentState>({
     Name:'',
@@ -13,7 +13,11 @@ const FunctionalComponent :React.FC<IFunctionalComponentProps>=(props)=>{
     Age:'',
     Score:0,
     Salary:'',
-    Address:''
+    Address:'',
+    Manager:[],
+    ManagerId:[],
+    Admin:'',
+    AdminId:0,
   });
   //create item
   const createItem=async()=>{
@@ -26,7 +30,9 @@ const FunctionalComponent :React.FC<IFunctionalComponentProps>=(props)=>{
         Age:parseInt(formData.Age),
         Address:formData.Address,
         Score:formData.Score,
-        Salary:parseInt(formData.Salary)
+        Salary:parseInt(formData.Salary),
+        ManagerId:{results:formData.ManagerId},
+        AdminId:formData.AdminId,
       });
       Dialog.alert('Item created successfully');
       console.log(item);
@@ -36,11 +42,31 @@ const FunctionalComponent :React.FC<IFunctionalComponentProps>=(props)=>{
     Age:'',
     Score:0,
     Salary:'',
-    Address:''
+    Address:'',
+    Manager:[],
+    ManagerId:[],
+    Admin:'',
+    AdminId:0,
       })
     }catch(error){
       console.log(error);
     }
+  }
+  //get admin
+  const _getAdmin=(items:any[])=>{
+    if(items.length>0){
+      setFormdData(prev=>({...prev,Admin:items[0].text,AdminId:items[0].id}));
+    }
+    else{
+      setFormdData(prev=>({...prev,Admin:'',AdminId:0}));
+    }
+  }
+  //get Manager
+  const _getManagers=(items:any)=>{
+      const managers=items.map((item:any)=>item.text);
+    const managersId=items.map((item:any)=>item.id);
+    setFormdData(prev=>({...prev,Manager:managers,ManagerId:managersId}));
+
   }
   //event handle
   const handleChange=(fieldvalue:keyof IFunctionalComponentState,value:string|number|boolean)=>{
@@ -57,6 +83,28 @@ return(
           prefix='$' suffix='USD' />
           <Slider value={formData.Score} min={0} max={100} step={1} showValue label='Score' onChange={(value)=>handleChange("Score",value)} />
           <TextField label='Address' value={formData.Address} onChange={(_,event)=>handleChange("Address",event||"")} multiline rows={3} iconProps={{iconName:'home'}}/>
+        <PeoplePicker
+        context={props.context as any}
+        titleText='Managers'
+        personSelectionLimit={3}
+        principalTypes={[PrincipalType.User]}
+        defaultSelectedUsers={formData.Manager}
+        resolveDelay={1000}
+        ensureUser={true}
+        onChange={_getManagers}
+        webAbsoluteUrl={props.siteurl}
+        />
+        <PeoplePicker
+        context={props.context as any}
+        titleText='Admin'
+        personSelectionLimit={1}
+        principalTypes={[PrincipalType.User]}
+        defaultSelectedUsers={[formData.Admin?formData.Admin:'']}
+        resolveDelay={1000}
+        ensureUser={true}
+        onChange={_getAdmin}
+        webAbsoluteUrl={props.siteurl}
+        />
         <br/>
         <PrimaryButton text='Save' onClick={createItem} iconProps={{iconName:'save'}} />
   </>
